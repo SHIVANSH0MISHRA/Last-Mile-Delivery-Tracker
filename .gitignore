@@ -1,0 +1,33 @@
+# Root gitignore for LastMileDeliveryTracker
+
+# Dependency directories
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Local environment files (Secrets & local configurations)
+.env
+.env*.local
+server/.env
+
+# Production build outputs
+dist/
+client/dist/
+dist-ssr/
+
+# Mock File Database storage (dynamic runtime data files)
+server/data/*.json
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System / OS files
+.DS_Store
+
+# IDE configs
+.vscode/
+.idea/
