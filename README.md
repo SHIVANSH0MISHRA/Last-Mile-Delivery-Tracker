@@ -16,6 +16,21 @@ A full-stack logistics management platform to automate package delivery pricing,
 * **Zero-Config DB Fallback**: Detects MongoDB connections. If MongoDB is not running locally or fails to connect, the server automatically boots in **Mock DB Mode**, storing collections in local JSON files in `server/data/`. This makes local development completely plug-and-play.
 
 ---
+# 📸 Screenshots
+
+## 🏠 Landing Page<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 39 37 AM" src="https://github.com/user-attachments/assets/9918dec5-1d2b-43ba-a65f-8272bee554d1" />
+
+
+## Login Page<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 39 52 AM" src="https://github.com/user-attachments/assets/6af287c6-27ab-47dc-95c0-d37840f8639e" />
+
+## Admin Page<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 40 09 AM" src="https://github.com/user-attachments/assets/b44861d1-e07c-4832-b879-17c396f8b950" />
+
+"" Admin<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 40 19 AM" src="https://github.com/user-attachments/assets/061e474a-54df-479e-b59b-c5169f045cf6" />
+
+## Customer Page<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 40 36 AM" src="https://github.com/user-attachments/assets/0556fdf4-6682-4801-a7b6-7cef767cca73" />
+
+## Delivery Agent Page<img width="1470" height="956" alt="Screenshot 2026-07-04 at 12 41 11 AM" src="https://github.com/user-attachments/assets/73f17de5-a030-4db1-b234-f6f443861b04" />
+
 
 ## 🛠️ Tech Stack
 
