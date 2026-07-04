@@ -1,0 +1,11 @@
+{
+  "name": "last-mile-delivery-tracker",
+  "version": "1.0.0",
+  "description": "Full-stack Last-Mile Delivery Tracker application",
+  "scripts": {
+    "install-all": "npm install --prefix client && npm install --prefix server",
+    "build-client": "npm run build --prefix client",
+    "start": "NODE_ENV=production node server/server.js",
+    "seed-db": "node server/utils/seed.js"
+  }
+}
