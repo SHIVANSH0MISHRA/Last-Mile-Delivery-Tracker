@@ -19,13 +19,19 @@ class DynamicModel {
     } else {
       if (!this._mongooseModel) {
         let schema;
+        // // Check if schemaDefinition is already a Mongoose schema
+        // if (schemaDefinition instanceof mongoose.Schema) {
+        //   schema = schemaDefinition;
+        // } else {
+        //   schema = new mongoose.Schema(this.schemaDefinition, this.options);
+        // }
         // Check if schemaDefinition is already a Mongoose schema
-        if (schemaDefinition instanceof mongoose.Schema) {
-          schema = schemaDefinition;
+        if (this.schemaDefinition instanceof mongoose.Schema) {
+          schema = this.schemaDefinition;
         } else {
           schema = new mongoose.Schema(this.schemaDefinition, this.options);
         }
-        
+
         // Mongoose registered model check to avoid overwrites
         try {
           this._mongooseModel = mongoose.model(this.modelName);
