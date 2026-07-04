@@ -43,6 +43,50 @@ https://last-mile-delivery-tracker-mu.vercel.app/
 * **Notifications**: Nodemailer (Ethereal test mailbox integration)
 
 ---
+## 🏗️ System Design          
+                           +----------------------+
+                           |      User Browser    |
+                           |  React + Tailwind UI |
+                           +----------+-----------+
+                                      |
+                                      |
+                           HTTPS (REST API)
+                                      |
+                                      v
+                        +---------------------------+
+                        |      Express.js Server    |
+                        | Authentication Middleware |
+                        | Business Logic Layer      |
+                        +-----------+---------------+
+                                    |
+          +-------------------------+---------------------------+
+          |                         |                           |
+          |                         |                           |
+          v                         v                           v
+     +------------------+     +--------------------+      +------------------+
+    | Pricing Engine   |     | Assignment Engine  |      | Notification     |
+    | Calculate Quotes |     | Auto Agent Select  |      | Email Service    |
+    +------------------+     +--------------------+      +------------------+
+          |                         |                           |
+          +------------+------------+---------------------------+
+                       |
+                       v
+             +------------------------+
+             |     MongoDB Atlas      |
+             | Users                  |
+             | Orders                 |
+             | Zones                  |
+             | Rate Cards             |
+             | Tracking History       |
+             +------------------------+
+
+
+---
+
+## System Workflow
+                              
+                                 
+
 
 ## 🏃 Getting Started (Quick Start)
 
@@ -146,3 +190,45 @@ LastMileDeliveryTracker/
 * `GET /api/agent/orders` - List active courier dispatches.
 * `PUT /api/agent/availability` - Toggle Online/Offline duty status.
 * `PUT /api/agent/orders/:id/status` - Advance shipment states (Picked Up, In Transit, Out for Delivery, Delivered, Failed).
+---
+
+## 🏗️ System Design Write-Up
+### 1. Database Schema & Data Modeling
+The application utilizes a document-oriented database model (MongoDB) managed via Mongoose schemas.
+* **User**: Stores roles (`customer`, `agent`, `admin`), profile status, availability status (`availability: boolean`), and dynamic telematics (current coordinate latitude/longitude, `currentZone` name).
+* **Zone**: Links zone names (`Zone A`) to sets of mapped postcodes (`pincodes: [string]`).
+* **RateCard**: Stores pricing configurations. Fields include `pickupZone`, `dropZone`, `customerType` (`B2B`/`B2C`), `paymentMethod` (`Prepaid`/`COD`), `baseWeightLimit`, `baseRate`, `perKgIncrementalRate`, and COD `extraCharge`.
+* **Order**: Houses shipment data including `orderNumber`, foreign keys (`customer`, `assignedAgent`), structural `packageDetails`, dynamically calculated `pricingDetails` snapshots, and current state (`status`).
+* **TrackingHistory**: Documents every state transition as a separate document, storing the `order` reference, target `status`, `updatedBy` actor reference, and `remarks`.
+### 2. Rate Calculation Engine
+The rate engine ensures billing correctness through:
+1. **Volumetric Weight Calculation**: Computes volumetric mass as:
+   $$\text{Volumetric Weight} = \frac{\text{Length} \times \text{Breadth} \times \text{Height}}{5000}$$
+2. **Billable Weight Identification**: Employs:
+   $$\text{Billable Weight} = \max(\text{Actual Weight}, \text{Volumetric Weight})$$
+3. **Database Lookups**: Queries active `RateCard` configurations matching the order's resolved route, payment type, and customer class.
+4. **Pricing Logic**:
+   $$\text{Cost} = \text{Base Rate} + \text{Extra Charge (COD)} + \max\left(0, \lceil \text{Billable Weight} - \text{Base Weight Limit} \rceil\right) \times \text{Incremental Rate}$$
+   * Fractional excess weight is rounded up to the next full kilogram (`Math.ceil`) to ensure standard freight billing practices.
+### 3. Zone Detection Approach
+Geographical zone detection resolves postal codes to operational zones:
+* The system reads the pickup and drop pincodes from the booking.
+* It performs a query: `Zone.findOne({ pincodes: cleanPincode })`.
+* If either postcode is unmapped, booking is aborted with a validation error.
+* Successfully resolved zone names are embedded in the order (`pickupAddress.zone`, `dropAddress.zone`) to select the appropriate rate card and dispatcher queue.
+### 4. Auto-Assignment Logic & Agent Availability Modeling
+Assignment happens immediately upon booking or rescheduling:
+1. The dispatcher queries available delivery agents in the order's pickup zone:
+   ```javascript
+   User.find({ role: 'agent', status: 'active', availability: true, currentZone: pickupZone })
+   ```
+2. If agents are found, the first available courier is assigned. The order status transitions to `Assigned`.
+3. If no couriers are active or online in that zone, assignment is deferred. The order remains in its current state (`Created` or `Rescheduled`), allowing admins to trigger manual overrides or trigger auto-assignment once agents come on-duty.
+### 5. Order Status Lifecycle & Immutable Tracking History
+State changes follow a progressive checklist:
+$$\text{Created} \rightarrow \text{Assigned} \rightarrow \text{Picked Up} \rightarrow \text{In Transit} \rightarrow \text{Out For Delivery} \rightarrow \text{Delivered / Failed}$$
+* **Immutability**: Tracking logs are never updated or deleted. To change or log a state transition, a new `TrackingHistory` document is appended. This logs timestamps and tracking notes, creating a clean audit trail.
+### 6. Failed Delivery Handling & Rescheduling Loop
+Failed deliveries require agents to provide mandatory feedback:
+1. **Agent Action**: The agent attempts delivery. If unsuccessful, they must call `PUT /api/agent/orders/:id/status` with `status: 'Failed'` and a mandatory, non-empty `remarks` string.
+2. **Rescheduling**: The customer can trigger `PUT /api/orders/:id/reschedule`, supplying a future date. The system clears `assignedAgent`, increments the rescheduling count, sets the status to `Rescheduled`, appends a tracking log, and re-runs the auto-assignment logic.
