@@ -84,9 +84,7 @@ https://last-mile-delivery-tracker-mu.vercel.app/
 ---
 
 ## System Workflow
-                              
-                                 
-
+    <img width="1536" height="1024" alt="system_design" src="https://github.com/user-attachments/assets/ec74620e-2f67-445a-ba19-cc3111f212dd" />
 
 ## 🏃 Getting Started (Quick Start)
 
